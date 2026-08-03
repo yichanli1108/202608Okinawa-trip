@@ -334,6 +334,143 @@
     color: rgba(18,38,58,0.6);
     font-size:13.5px;
   }
+
+  /* ===== Prep checklist ===== */
+  .prep-overview{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 18px 0 28px;
+  }
+  @media (max-width: 560px){ .prep-overview{ grid-template-columns: 1fr; } }
+  .prep-summary-card{
+    background: var(--indigo);
+    color: var(--paper);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .prep-summary-card .label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    opacity:0.65;
+    margin-bottom: 6px;
+  }
+  .prep-summary-card .count{
+    font-family:'Fraunces', serif;
+    font-size: 30px;
+    font-weight:600;
+    margin-bottom: 10px;
+  }
+  .track{
+    width:100%;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(251,247,239,0.2);
+    overflow:hidden;
+  }
+  .track .fill{
+    height:100%;
+    background: var(--gold);
+    border-radius: 999px;
+    width:0%;
+    transition: width 0.3s ease;
+  }
+
+  .check-card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    overflow:hidden;
+  }
+  .check-card summary{
+    list-style:none;
+    cursor:pointer;
+    padding: 16px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 12px;
+  }
+  .check-card summary::-webkit-details-marker{ display:none; }
+  .check-card summary .cat-name{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 16px;
+    color: var(--ink);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .check-card summary .cat-progress{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-shrink:0;
+  }
+  .check-card summary .cat-progress .frac{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--lagoon);
+    white-space:nowrap;
+  }
+  .check-card summary .chev{
+    transition: transform 0.2s ease;
+    color: rgba(18,38,58,0.4);
+    font-size:12px;
+  }
+  .check-card[open] summary .chev{ transform: rotate(90deg); }
+  .cat-track{
+    height:5px;
+    background: var(--line);
+    border-radius:999px;
+    width: 56px;
+    overflow:hidden;
+  }
+  .cat-track .cat-fill{
+    height:100%;
+    background: var(--lagoon);
+    width:0%;
+    transition: width 0.3s ease;
+  }
+  .check-body{
+    padding: 2px 18px 16px;
+    border-top: 1px solid var(--line);
+  }
+  .check-item{
+    display:flex;
+    align-items:flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--line);
+    font-size: 14px;
+    color: rgba(18,38,58,0.85);
+  }
+  .check-item:last-child{ border-bottom:none; }
+  .check-item input[type="checkbox"]{
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+    accent-color: var(--lagoon);
+    flex-shrink:0;
+  }
+  .check-item label{
+    cursor:pointer;
+    flex:1;
+  }
+  .check-item.checked label{
+    text-decoration: line-through;
+    color: rgba(18,38,58,0.4);
+  }
+  .prep-note{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: rgba(18,38,58,0.45);
+    text-align:center;
+    margin-top: 6px;
+  }
 </style>
 </head>
 <body>
@@ -389,6 +526,7 @@
   <a href="#naha2">8/17 那霸</a>
   <a href="#kume">8/18 久米島</a>
   <a href="#going-home">8/21 回程</a>
+  <a href="#prep">行前準備</a>
 </nav>
 
 <main>
@@ -652,11 +790,170 @@
       <p>① 8/10 那霸飯店早餐需現場補繳3歲小孩差額<br>② 租車還車地點：泊港店（8/17 18:00前）<br>③ 兩台租車為刻意分租，非重複訂單</p>
     </div>
   </div>
+
+  <section class="title-row" id="prep">
+    <h2>行前準備</h2>
+    <p>票券待辦與行李清單，勾選後自動記錄進度</p>
+  </section>
+
+  <div class="prep-overview">
+    <div class="prep-summary-card">
+      <div class="label">🎫 票券待辦</div>
+      <div class="count" id="ticket-overall-count">0/0</div>
+      <div class="track"><div class="fill" id="ticket-overall-fill"></div></div>
+    </div>
+    <div class="prep-summary-card" style="background:var(--lagoon);">
+      <div class="label">🧳 行李清單</div>
+      <div class="count" id="luggage-overall-count">0/0</div>
+      <div class="track"><div class="fill" id="luggage-overall-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- ===== TICKETS ===== -->
+  <div id="ticket-checklist">
+    <details class="check-card" open data-group="tickets" data-cat="訂房確認">
+      <summary>
+        <span class="cat-name">🏨 訂房確認信</span>
+        <span class="cat-progress"><span class="frac">0/6</span><span class="cat-track"><span class="cat-fill"></span></span><span class="chev">▶</span></span>
+      </summary>
+      <div class="check-body">
+        <div class="check-item"><input type="checkbox" id="t1"><label for="t1">JR九州ホテル ブラッサム那霸（8/10–11）</label></div>
+        <div class="check-item"><input type="checkbox" id="t2"><label for="t2">Bougain Terrace Resort てぃーち家（8/11–14）</label></div>
+        <div class="check-item"><input type="checkbox" id="t3"><label for="t3">Nanjo獨棟房屋 Airbnb（8/14–17）</label></div>
+        <div class="check-item"><input type="checkbox" id="t4"><label for="t4">South Gate Hotel Okinawa（8/17–18）</label></div>
+        <div class="check-item"><input type="checkbox" id="t5"><label for="t5">Cypress Resort Kumejima（8/18–21）</label></div>
+        <div class="check-item"><input type="checkbox" id="t6"><label for="t6">所有住宿地址已存入手機地圖 / 離線收藏</label></div>
+      </div>
+    </details>
+
+    <details class="check-card" data-group="tickets" data-cat="交通票券">
+      <summary>
+        <span class="cat-name">✈️ 交通票券</span>
+        <span class="cat-progress"><span class="frac">0/5</span><span class="cat-track"><span class="cat-fill"></span></span><span class="chev">▶</span></span>
+      </summary>
+      <div class="check-body">
+        <div class="check-item"><input type="checkbox" id="t7"><label for="t7">CI0132 高雄→沖繩 電子機票（8/10）</label></div>
+        <div class="check-item"><input type="checkbox" id="t8"><label for="t8">CI2133 沖繩→高雄 電子機票（8/21）</label></div>
+        <div class="check-item"><input type="checkbox" id="t9"><label for="t9">久米商船船票引換券已列印（W586393）</label></div>
+        <div class="check-item"><input type="checkbox" id="t10"><label for="t10">久米島→那霸 航班訂單（1616333035363702）</label></div>
+        <div class="check-item"><input type="checkbox" id="t11"><label for="t11">ORIX租車預約確認 x2（247228310 / 247228317）</label></div>
+      </div>
+    </details>
+
+    <details class="check-card" data-group="tickets" data-cat="景點與其他">
+      <summary>
+        <span class="cat-name">🎟️ 景點與其他</span>
+        <span class="cat-progress"><span class="frac">0/4</span><span class="cat-track"><span class="cat-fill"></span></span><span class="chev">▶</span></span>
+      </summary>
+      <div class="check-body">
+        <div class="check-item"><input type="checkbox" id="t13"><label for="t13">沖縄美ら海水族館門票（現場或線上皆可）</label></div>
+        <div class="check-item"><input type="checkbox" id="t14"><label for="t14">Costco會員卡確認攜帶</label></div>
+        <div class="check-item"><input type="checkbox" id="t15"><label for="t15">eSIM / 上網方案已購買並確認安裝</label></div>
+        <div class="check-item"><input type="checkbox" id="t16"><label for="t16">旅平險已投保</label></div>
+      </div>
+    </details>
+  </div>
+
+  <!-- ===== PACKING LIST ===== -->
+  <div id="luggage-checklist">
+    <details class="check-card" open data-group="luggage" data-cat="證件與重要物品">
+      <summary>
+        <span class="cat-name">🪪 證件 &amp; 重要物品</span>
+        <span class="cat-progress"><span class="frac">0/7</span><span class="cat-track"><span class="cat-fill"></span></span><span class="chev">▶</span></span>
+      </summary>
+      <div class="check-body">
+        <div class="check-item"><input type="checkbox" id="l1"><label for="l1"><strong>護照（效期6個月以上，全員）</strong></label></div>
+        <div class="check-item"><input type="checkbox" id="l6"><label for="l6"><strong>駕照正本&amp;駕照日文譯本</strong></label></div>
+        <div class="check-item"><input type="checkbox" id="l2"><label for="l2">電子機票確認信（CI0132 / CI2133）</label></div>
+        <div class="check-item"><input type="checkbox" id="l3"><label for="l3">所有住宿訂房確認信（紙本或手機截圖）</label></div>
+        <div class="check-item"><input type="checkbox" id="l4"><label for="l4">信用卡（Visa/Master，租車與飯店現場付款用）</label></div>
+        <div class="check-item"><input type="checkbox" id="l5"><label for="l5">現金日幣（租車、南城villa現場付款用）</label></div>
+        <div class="check-item"><input type="checkbox" id="l7"><label for="l7">緊急聯絡資訊（飯店電話、租車行電話）</label></div>
+      </div>
+    </details>
+
+    <details class="check-card" data-group="luggage" data-cat="衣物與個人用品">
+      <summary>
+        <span class="cat-name">👕 衣物 &amp; 個人用品</span>
+        <span class="cat-progress"><span class="frac">0/5</span><span class="cat-track"><span class="cat-fill"></span></span><span class="chev">▶</span></span>
+      </summary>
+      <div class="check-body">
+        <div class="check-item"><input type="checkbox" id="l8"><label for="l8">手機充電器/傳輸線/移動電源</label></div>
+        <div class="check-item"><input type="checkbox" id="l13"><label for="l13">泳衣（2套）&amp;沙灘衣褲（villa/度假村多有泳池或近海）</label></div>
+        <div class="check-item"><input type="checkbox" id="l25"><label for="l25">拖鞋（沙灘）&amp;好走的鞋（齋場御嶽石階路）</label></div>
+        <div class="check-item"><input type="checkbox" id="l16"><label for="l16">防曬用品/防曬薄外套/遮陽帽/太陽眼鏡</label></div>
+        <div class="check-item"><input type="checkbox" id="l19"><label for="l19">常備藥（暈船藥我有買6歲以上吃的，茉茉的需要額外準備）</label></div>
+      </div>
+    </details>
+  </div>
+  <p class="prep-note">勾選狀態會儲存在這個瀏覽器裝置上（localStorage），換裝置或清除瀏覽器資料需重新勾選</p>
 </main>
 
 <footer>
   沖繩家族旅行 · 2026.08.10 – 08.21 · 依現有訂單資訊整理，出發前請再次核對各項時刻與費用
 </footer>
+
+<script>
+(function(){
+  var STORAGE_KEY = 'okinawa-trip-prep-2026';
+  var state = {};
+  try {
+    state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  } catch(e) { state = {}; }
+
+  function save(){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  }
+
+  var checkboxes = document.querySelectorAll('.check-item input[type="checkbox"]');
+  checkboxes.forEach(function(cb){
+    if (state[cb.id]) {
+      cb.checked = true;
+      cb.closest('.check-item').classList.add('checked');
+    }
+    cb.addEventListener('change', function(){
+      state[cb.id] = cb.checked;
+      cb.closest('.check-item').classList.toggle('checked', cb.checked);
+      save();
+      updateAll();
+    });
+  });
+
+  function updateAll(){
+    var groupTotals = { tickets: {done:0, total:0}, luggage: {done:0, total:0} };
+
+    document.querySelectorAll('.check-card').forEach(function(card){
+      var group = card.getAttribute('data-group');
+      var items = card.querySelectorAll('.check-item input[type="checkbox"]');
+      var done = 0;
+      items.forEach(function(cb){ if (cb.checked) done++; });
+      var total = items.length;
+
+      var frac = card.querySelector('.frac');
+      if (frac) frac.textContent = done + '/' + total;
+      var fill = card.querySelector('.cat-fill');
+      if (fill) fill.style.width = (total ? (done/total*100) : 0) + '%';
+
+      if (groupTotals[group]) {
+        groupTotals[group].done += done;
+        groupTotals[group].total += total;
+      }
+    });
+
+    var tCount = document.getElementById('ticket-overall-count');
+    var tFill = document.getElementById('ticket-overall-fill');
+    if (tCount) tCount.textContent = groupTotals.tickets.done + '/' + groupTotals.tickets.total;
+    if (tFill) tFill.style.width = (groupTotals.tickets.total ? (groupTotals.tickets.done/groupTotals.tickets.total*100) : 0) + '%';
+
+    var lCount = document.getElementById('luggage-overall-count');
+    var lFill = document.getElementById('luggage-overall-fill');
+    if (lCount) lCount.textContent = groupTotals.luggage.done + '/' + groupTotals.luggage.total;
+    if (lFill) lFill.style.width = (groupTotals.luggage.total ? (groupTotals.luggage.done/groupTotals.luggage.total*100) : 0) + '%';
+  }
+
+  updateAll();
+})();
+</script>
 
 </body>
 </html>
